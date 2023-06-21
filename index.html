@@ -8,18 +8,19 @@
   <style>
     #container {
       display: flex;
-      flex-direction: row;
-      align-items: flex-start;
-      justify-content: space-between;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       height: 100vh;
       padding: 10px;
     }
 
     #videoContainer {
-      width: 60%;
+      width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
+      margin-bottom: 10px;
     }
 
     #videoElement {
@@ -29,7 +30,6 @@
     }
 
     #scoreContainer {
-      width: 35%;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -40,7 +40,7 @@
 <body>
 <div id="container">
   <div id="videoContainer">
-    <video id="videoElement" autoplay></video>
+    <video id="videoElement" autoplay playsinline controls></video>
   </div>
   <div id="scoreContainer">
     <p id="qrCodeValue">Scanning...</p>
@@ -49,6 +49,7 @@
     <button id="clearScoreButton">Clear Score</button>
   </div>
 </div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.18.5"></script>
 <script>
