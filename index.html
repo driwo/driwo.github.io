@@ -26,7 +26,7 @@
     #videoElement {
       width: 100%;
       height: auto;
-
+      transform: scaleX(-1);
     }
 
     #scoreContainer {
@@ -40,7 +40,7 @@
 <body>
 <div id="container">
   <div id="videoContainer">
-    <video id="videoElement" autoplay playsinline webkit-playsinline></video>
+    <video id="videoElement"></video>
   </div>
   <div id="scoreContainer">
     <p id="qrCodeValue">Scanning...</p>
@@ -50,8 +50,7 @@
   </div>
 </div>
 
-
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.18.5"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.min.js"></script>
 <script>
   // Check if the browser supports getUserMedia
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -60,18 +59,18 @@
     const rescanButton = document.getElementById('rescanButton');
     const scoreElement = document.getElementById('score');
     const clearScoreButton = document.getElementById('clearScoreButton');
-    const codeReader = new ZXing.BrowserQRCodeReader();
     let scanning = true;
     let score = 0;
 
-    rescanButton.addEventListener('click', function() {
+
+    rescanButton.addEventListener('click', function () {
       qrCodeValue.textContent = "Scanning...";
       rescanButton.disabled = true;
       scanning = true;
       scanQRCode();
     });
 
-    clearScoreButton.addEventListener('click', function() {
+    clearScoreButton.addEventListener('click', function () {
       clearScore();
     });
 
@@ -102,27 +101,38 @@
     function scanQRCode() {
       if (!scanning) return;
 
-      codeReader.decodeOnceFromVideoDevice(undefined, 'videoElement')
-        .then(function(result) {
-          qrCodeValue.textContent = result.text;
-          if (result.text === "player2") {
-            incrementScore();
-          }
-          scanning = false;
-          rescanButton.disabled = false;
-        })
-        .catch(function(error) {
-          if (!(error instanceof ZXing.NotFoundException)) {
-            console.error('QR code scan error: ', error);
-          }
-          scanning = false;
-          rescanButton.disabled = false;
-        });
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      const videoWidth = videoElement.videoWidth;
+      const videoHeight = videoElement.videoHeight;
+      canvas.width = videoWidth;
+      canvas.height = videoHeight;
+
+      context.drawImage(videoElement, 0, 0, videoWidth, videoHeight);
+      const imageData = context.getImageData(0, 0, videoWidth, videoHeight);
+      const code = jsQR(imageData.data, videoWidth, videoHeight);
+
+      if (code) {
+        qrCodeValue.textContent = code.data;
+        if (code.data === "player2") {
+          incrementScore();
+        }
+        scanning = false;
+        rescanButton.disabled = false;
+      } else {
+        scanning = false;
+        rescanButton.disabled = false;
+      }
+
+      if (scanning) {
+        requestAnimationFrame(scanQRCode);
+      }
     }
 
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
       .then(function(stream) {
         videoElement.srcObject = stream;
+        videoElement.play();
         loadScore();
         scanQRCode();
       })
@@ -135,3 +145,4 @@
 </script>
 </body>
 </html>
+
