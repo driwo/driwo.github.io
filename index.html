@@ -26,6 +26,7 @@
     #videoElement {
       width: 100%;
       height: auto;
+      -webkit-transform: scaleX(-1);
       transform: scaleX(-1);
     }
 
@@ -40,7 +41,7 @@
 <body>
 <div id="container">
   <div id="videoContainer">
-    <video id="videoElement" autoplay playsinline controls></video>
+    <video id="videoElement" autoplay playsinline webkit-playsinline></video>
   </div>
   <div id="scoreContainer">
     <p id="qrCodeValue">Scanning...</p>
