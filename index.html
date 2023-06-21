@@ -1,41 +1,119 @@
-<!doctype html>
-<html class="no-js" lang="">
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title></title>
-  <meta name="description" content="">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <meta property="og:title" content="">
-  <meta property="og:type" content="">
-  <meta property="og:url" content="">
-  <meta property="og:image" content="">
-
-  <link rel="manifest" href="site.webmanifest">
-  <link rel="apple-touch-icon" href="icon.png">
-  <!-- Place favicon.ico in the root directory -->
-
-  <link rel="stylesheet" href="css/normalize.css">
-  <link rel="stylesheet" href="css/main.css">
-
-  <meta name="theme-color" content="#fafafa">
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Camera and QR Code Scanner</title>
 </head>
-
 <body>
+<div>
+  <input type="checkbox" id="mirrorCheckbox" checked>
+  <label for="mirrorCheckbox">Mirror Camera</label>
+</div>
+<video id="videoElement" width="400" height="300" autoplay></video>
+<p id="qrCodeValue">Scanning...</p>
+<button id="rescanButton" disabled>Scan Again</button>
+<p id="score">Score: 0</p>
+<button id="clearScoreButton">Clear Score</button>
 
-  <!-- Add your site or application content here -->
-  <p>Hello world! This is HTML5 Boilerplate.</p>
-  <script src="js/vendor/modernizr-3.11.2.min.js"></script>
-  <script src="js/plugins.js"></script>
-  <script src="js/main.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.18.5"></script>
+<script>
+  // Check if the browser supports getUserMedia
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    const videoElement = document.getElementById('videoElement');
+    const qrCodeValue = document.getElementById('qrCodeValue');
+    const mirrorCheckbox = document.getElementById('mirrorCheckbox');
+    const rescanButton = document.getElementById('rescanButton');
+    const scoreElement = document.getElementById('score');
+    const clearScoreButton = document.getElementById('clearScoreButton');
+    const codeReader = new ZXing.BrowserQRCodeReader();
+    let mirrorCamera = true;
+    let scanning = true;
+    let score = 0;
 
-  <!-- Google Analytics: change UA-XXXXX-Y to be your site's ID. -->
-  <script>
-    window.ga = function () { ga.q.push(arguments) }; ga.q = []; ga.l = +new Date;
-    ga('create', 'UA-XXXXX-Y', 'auto'); ga('set', 'anonymizeIp', true); ga('set', 'transport', 'beacon'); ga('send', 'pageview')
-  </script>
-  <script src="https://www.google-analytics.com/analytics.js" async></script>
+    mirrorCheckbox.addEventListener('change', function() {
+      mirrorCamera = mirrorCheckbox.checked;
+      applyMirrorTransformation();
+    });
+
+    rescanButton.addEventListener('click', function() {
+      qrCodeValue.textContent = "Scanning...";
+      rescanButton.disabled = true;
+      scanning = true;
+      scanQRCode();
+    });
+
+    clearScoreButton.addEventListener('click', function() {
+      clearScore();
+    });
+
+    function applyMirrorTransformation() {
+      if (mirrorCamera) {
+        videoElement.style.transform = 'scaleX(-1)';
+      } else {
+        videoElement.style.transform = 'scaleX(1)';
+      }
+    }
+
+    function incrementScore() {
+      score++;
+      scoreElement.textContent = `Score: ${score}`;
+      saveScore();
+    }
+
+    function saveScore() {
+      localStorage.setItem('score', score);
+    }
+
+    function loadScore() {
+      const savedScore = localStorage.getItem('score');
+      if (savedScore !== null) {
+        score = parseInt(savedScore);
+        scoreElement.textContent = `Score: ${score}`;
+      }
+    }
+
+    function clearScore() {
+      localStorage.removeItem('score');
+      score = 0;
+      scoreElement.textContent = `Score: ${score}`;
+    }
+
+    function scanQRCode() {
+      if (!scanning) return;
+
+      codeReader.decodeOnceFromVideoDevice(undefined, 'videoElement')
+        .then(function(result) {
+          qrCodeValue.textContent = result.text;
+          if (result.text === "player2") {
+            incrementScore();
+          }
+          scanning = false;
+          rescanButton.disabled = false;
+        })
+        .catch(function(error) {
+          if (!(error instanceof ZXing.NotFoundException)) {
+            console.error('QR code scan error: ', error);
+          }
+          scanning = false;
+          rescanButton.disabled = false;
+        });
+    }
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(function(stream) {
+        videoElement.srcObject = stream;
+        applyMirrorTransformation();
+        loadScore();
+        scanQRCode();
+      })
+      .catch(function(error) {
+        console.error('Error accessing camera: ', error);
+      });
+  } else {
+    console.error('getUserMedia is not supported');
+  }
+</script>
 </body>
-
 </html>
