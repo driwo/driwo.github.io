@@ -1,148 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Camera and QR Code Scanner</title>
-  <style>
-    #container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      padding: 10px;
-    }
+<script src="html5-qrcode.min.js"></script>
+<style>
+  .result{
+    background-color: green;
+    color:#fff;
+    padding:20px;
+  }
+  .row{
+    display:flex;
+  }
+</style>
 
-    #videoContainer {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 10px;
-    }
 
-    #videoElement {
-      width: 100%;
-      height: auto;
-      transform: scaleX(-1);
-    }
-
-    #scoreContainer {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-  </style>
-</head>
-<body>
-<div id="container">
-  <div id="videoContainer">
-    <video id="videoElement"></video>
+<div class="row">
+  <div class="col">
+    <div style="width:500px;" id="reader"></div>
   </div>
-  <div id="scoreContainer">
-    <p id="qrCodeValue">Scanning...</p>
-    <button id="rescanButton" disabled>Scan Again</button>
-    <p id="score">Score: 0</p>
-    <button id="clearScoreButton">Clear Score</button>
+  <div class="col" style="padding:30px;">
+    <h4>SCAN RESULT</h4>
+    <div id="result">Result Here</div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.min.js"></script>
-<script>
-  // Check if the browser supports getUserMedia
-  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    const videoElement = document.getElementById('videoElement');
-    const qrCodeValue = document.getElementById('qrCodeValue');
-    const rescanButton = document.getElementById('rescanButton');
-    const scoreElement = document.getElementById('score');
-    const clearScoreButton = document.getElementById('clearScoreButton');
-    let scanning = true;
-    let score = 0;
 
-
-    rescanButton.addEventListener('click', function () {
-      qrCodeValue.textContent = "Scanning...";
-      rescanButton.disabled = true;
-      scanning = true;
-      scanQRCode();
-    });
-
-    clearScoreButton.addEventListener('click', function () {
-      clearScore();
-    });
-
-    function incrementScore() {
-      score++;
-      scoreElement.textContent = `Score: ${score}`;
-      saveScore();
-    }
-
-    function saveScore() {
-      localStorage.setItem('score', score);
-    }
-
-    function loadScore() {
-      const savedScore = localStorage.getItem('score');
-      if (savedScore !== null) {
-        score = parseInt(savedScore);
-        scoreElement.textContent = `Score: ${score}`;
-      }
-    }
-
-    function clearScore() {
-      localStorage.removeItem('score');
-      score = 0;
-      scoreElement.textContent = `Score: ${score}`;
-    }
-
-    function scanQRCode() {
-      if (!scanning) return;
-
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      const videoWidth = videoElement.videoWidth;
-      const videoHeight = videoElement.videoHeight;
-      canvas.width = videoWidth;
-      canvas.height = videoHeight;
-
-      context.drawImage(videoElement, 0, 0, videoWidth, videoHeight);
-      const imageData = context.getImageData(0, 0, videoWidth, videoHeight);
-      const code = jsQR(imageData.data, videoWidth, videoHeight);
-
-      if (code) {
-        qrCodeValue.textContent = code.data;
-        if (code.data === "player2") {
-          incrementScore();
-        }
-        scanning = false;
-        rescanButton.disabled = false;
-      } else {
-        scanning = false;
-        rescanButton.disabled = false;
-      }
-
-      if (scanning) {
-        requestAnimationFrame(scanQRCode);
-      }
-    }
-
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-      .then(function(stream) {
-        videoElement.srcObject = stream;
-        videoElement.play();
-        loadScore();
-        scanQRCode();
-      })
-      .catch(function(error) {
-        console.error('Error accessing camera: ', error);
-      });
-  } else {
-    console.error('getUserMedia is not supported');
+<script type="text/javascript">
+  function onScanSuccess(qrCodeMessage) {
+    document.getElementById('result').innerHTML = '<span class="result">'+qrCodeMessage+'</span>';
   }
-</script>
-</body>
-</html>
 
+  function onScanError(errorMessage) {
+    //handle scan error
+  }
+
+  var html5QrcodeScanner = new Html5QrcodeScanner(
+    "reader", { fps: 10, qrbox: 250 });
+  html5QrcodeScanner.render(onScanSuccess, onScanError);
+
+</script>
