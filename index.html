@@ -5,17 +5,50 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Camera and QR Code Scanner</title>
+  <style>
+    #container {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: space-between;
+      height: 100vh;
+      padding: 10px;
+    }
+
+    #videoContainer {
+      width: 60%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #videoElement {
+      width: 100%;
+      height: auto;
+      transform: scaleX(-1);
+    }
+
+    #scoreContainer {
+      width: 35%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
 </head>
 <body>
-<div>
-  <input type="checkbox" id="mirrorCheckbox" checked>
-  <label for="mirrorCheckbox">Mirror Camera</label>
+<div id="container">
+  <div id="videoContainer">
+    <video id="videoElement" autoplay></video>
+  </div>
+  <div id="scoreContainer">
+    <p id="qrCodeValue">Scanning...</p>
+    <button id="rescanButton" disabled>Scan Again</button>
+    <p id="score">Score: 0</p>
+    <button id="clearScoreButton">Clear Score</button>
+  </div>
 </div>
-<video id="videoElement" width="400" height="300" autoplay></video>
-<p id="qrCodeValue">Scanning...</p>
-<button id="rescanButton" disabled>Scan Again</button>
-<p id="score">Score: 0</p>
-<button id="clearScoreButton">Clear Score</button>
 
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.18.5"></script>
 <script>
@@ -23,19 +56,12 @@
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     const videoElement = document.getElementById('videoElement');
     const qrCodeValue = document.getElementById('qrCodeValue');
-    const mirrorCheckbox = document.getElementById('mirrorCheckbox');
     const rescanButton = document.getElementById('rescanButton');
     const scoreElement = document.getElementById('score');
     const clearScoreButton = document.getElementById('clearScoreButton');
     const codeReader = new ZXing.BrowserQRCodeReader();
-    let mirrorCamera = true;
     let scanning = true;
     let score = 0;
-
-    mirrorCheckbox.addEventListener('change', function() {
-      mirrorCamera = mirrorCheckbox.checked;
-      applyMirrorTransformation();
-    });
 
     rescanButton.addEventListener('click', function() {
       qrCodeValue.textContent = "Scanning...";
@@ -47,14 +73,6 @@
     clearScoreButton.addEventListener('click', function() {
       clearScore();
     });
-
-    function applyMirrorTransformation() {
-      if (mirrorCamera) {
-        videoElement.style.transform = 'scaleX(-1)';
-      } else {
-        videoElement.style.transform = 'scaleX(1)';
-      }
-    }
 
     function incrementScore() {
       score++;
@@ -101,10 +119,9 @@
         });
     }
 
-    navigator.mediaDevices.getUserMedia({ video: true })
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
       .then(function(stream) {
         videoElement.srcObject = stream;
-        applyMirrorTransformation();
         loadScore();
         scanQRCode();
       })
