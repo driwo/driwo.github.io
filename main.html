@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Camera and QR Code Scanner</title>
+</head>
+<body>
+<div>
+  <input type="checkbox" id="mirrorCheckbox" checked>
+  <label for="mirrorCheckbox">Mirror Camera</label>
+</div>
+<video id="videoElement" width="400" height="300" autoplay></video>
+<p id="qrCodeValue">Scanning...</p>
+<button id="rescanButton" disabled>Scan Again</button>
+<p id="score">Score: 0</p>
+<button id="clearScoreButton">Clear Score</button>
+
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.18.5"></script>
+<script>
+  // Check if the browser supports getUserMedia
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    const videoElement = document.getElementById('videoElement');
+    const qrCodeValue = document.getElementById('qrCodeValue');
+    const mirrorCheckbox = document.getElementById('mirrorCheckbox');
+    const rescanButton = document.getElementById('rescanButton');
+    const scoreElement = document.getElementById('score');
+    const clearScoreButton = document.getElementById('clearScoreButton');
+    const codeReader = new ZXing.BrowserQRCodeReader();
+    let mirrorCamera = true;
+    let scanning = true;
+    let score = 0;
+
+    mirrorCheckbox.addEventListener('change', function() {
+      mirrorCamera = mirrorCheckbox.checked;
+      applyMirrorTransformation();
+    });
+
+    rescanButton.addEventListener('click', function() {
+      qrCodeValue.textContent = "Scanning...";
+      rescanButton.disabled = true;
+      scanning = true;
+      scanQRCode();
+    });
+
+    clearScoreButton.addEventListener('click', function() {
+      clearScore();
+    });
+
+    function applyMirrorTransformation() {
+      if (mirrorCamera) {
+        videoElement.style.transform = 'scaleX(-1)';
+      } else {
+        videoElement.style.transform = 'scaleX(1)';
+      }
+    }
+
+    function incrementScore() {
+      score++;
+      scoreElement.textContent = `Score: ${score}`;
+      saveScore();
+    }
+
+    function saveScore() {
+      localStorage.setItem('score', score);
+    }
+
+    function loadScore() {
+      const savedScore = localStorage.getItem('score');
+      if (savedScore !== null) {
+        score = parseInt(savedScore);
+        scoreElement.textContent = `Score: ${score}`;
+      }
+    }
+
+    function clearScore() {
+      localStorage.removeItem('score');
+      score = 0;
+      scoreElement.textContent = `Score: ${score}`;
+    }
+
+    function scanQRCode() {
+      if (!scanning) return;
+
+      codeReader.decodeOnceFromVideoDevice(undefined, 'videoElement')
+        .then(function(result) {
+          qrCodeValue.textContent = result.text;
+          if (result.text === "player2") {
+            incrementScore();
+          }
+          scanning = false;
+          rescanButton.disabled = false;
+        })
+        .catch(function(error) {
+          if (!(error instanceof ZXing.NotFoundException)) {
+            console.error('QR code scan error: ', error);
+          }
+          scanning = false;
+          rescanButton.disabled = false;
+        });
+    }
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(function(stream) {
+        videoElement.srcObject = stream;
+        applyMirrorTransformation();
+        loadScore();
+        scanQRCode();
+      })
+      .catch(function(error) {
+        console.error('Error accessing camera: ', error);
+      });
+  } else {
+    console.error('getUserMedia is not supported');
+  }
+</script>
+</body>
+</html>
