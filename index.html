@@ -1,19 +1,23 @@
-<script src="html5-qrcode.min.js"></script>
+<script src="js/main.js"></script>
 <style>
   .result{
     background-color: green;
     color:#fff;
     padding:20px;
+    align-content: center;
   }
   .row{
     display:flex;
+    flex-direction: column;
+    align-items: center;
+
   }
 </style>
 
 
 <div class="row">
   <div class="col">
-    <div style="width:500px;" id="reader"></div>
+    <div style="width:600px;" id="reader"></div>
   </div>
   <div class="col" style="padding:30px;">
     <h4>SCAN RESULT</h4>
@@ -32,7 +36,7 @@
   }
 
   var html5QrcodeScanner = new Html5QrcodeScanner(
-    "reader", { fps: 10, qrbox: 250 });
+    "reader", { fps: 20, qrbox: 400 });
   html5QrcodeScanner.render(onScanSuccess, onScanError);
 
 </script>
